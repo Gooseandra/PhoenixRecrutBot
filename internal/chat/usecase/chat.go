@@ -6,6 +6,7 @@ import (
 	"phenixRecrutBot/internal/chat/models"
 	"phenixRecrutBot/internal/constants"
 	"phenixRecrutBot/internal/pkg/IAP/IAP"
+	"phenixRecrutBot/internal/pkg/errors"
 	"phenixRecrutBot/internal/pkg/register"
 	"strconv"
 	"sync"
@@ -44,14 +45,23 @@ func (chat Chat) Routine(chats map[int64]Chat, mainMutex *sync.Mutex) {
 					case constants.AdminCodeMessage:
 						msg := tgbotapi.NewMessage(chat.Id, "Авторизация")
 						msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
-						models.BotAPI.Request(msg)
-						chat.Register.GetForms(chat.Id, chat.Channel)
+						_, err := models.BotAPI.Request(msg)
+						if err != nil {
+							chat.Iap.PrintText(chat.Id, constants.ErrorMessage)
+							errors.Warn(chat.Id, err.Error())
+						}
+						err = chat.Register.GetForms(chat.Id, chat.Channel)
+						if err != nil {
+							chat.Iap.PrintText(chat.Id, constants.ErrorMessage)
+							errors.Warn(chat.Id, err.Error())
+						}
 					default:
 						msg := tgbotapi.NewMessage(chat.Id, "")
 						msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
 						models.BotAPI.Request(msg)
-						_, err := chat.Register.Register(chat.Id, chat.Channel, message.Message.From.UserName)
+						_, err := chat.Register.Register(chat.Id, chat.Channel, message.Message)
 						if err != nil {
+							chat.Iap.PrintText(chat.Id, constants.ErrorMessage)
 							log.Println(err.Error())
 						}
 					}

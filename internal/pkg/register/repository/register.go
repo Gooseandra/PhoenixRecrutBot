@@ -6,6 +6,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"phenixRecrutBot/internal/pkg/errors"
 	"phenixRecrutBot/internal/pkg/register/models"
+	"time"
 )
 
 type RegisterRepo struct {
@@ -15,8 +16,19 @@ type RegisterRepo struct {
 func NewRegisterRepo(pool pgxpool.Pool) RegisterRepo { return RegisterRepo{db: pool} }
 
 func (r RegisterRepo) SetNewForm(form models.Form, id int64) error {
-	query := `insert into forms(name, surname, phone, vk, tg, confirmed_name)values($1,$2,$3,$4,$5,$6)`
-	_, err := r.db.Exec(context.Background(), query, form.Name, form.Surname, form.Phone, form.Vk, form.Tg, form.ConfirmedName)
+	query := `INSERT INTO forms (name, surname, phone, vk, tg, confirmed_name, time)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT (tg) 
+DO UPDATE 
+SET 
+    name = EXCLUDED.name,
+    surname = EXCLUDED.surname,
+    phone = EXCLUDED.phone,
+    vk = EXCLUDED.vk,
+    confirmed_name = EXCLUDED.confirmed_name,
+    time = EXCLUDED.time;
+`
+	_, err := r.db.Exec(context.Background(), query, form.Name, form.Surname, form.Phone, form.Vk, form.Tg, form.ConfirmedName, time.Now())
 	if err != nil {
 		errors.Warn(id, fmt.Sprintf("can`t insert form with arguments Name:%s, Surname:%s, Phone:%s, Vk:%s, Tg:%s, Confirmation:%s",
 			form.Name, form.Surname, form.Phone, form.Vk, form.Tg, form.ConfirmedName))

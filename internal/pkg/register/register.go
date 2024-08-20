@@ -6,7 +6,7 @@ import (
 )
 
 type RegisterUC interface {
-	Register(id int64, channel chan tgbotapi.Update, userName string) (bool, error)
+	Register(id int64, channel chan tgbotapi.Update, msg *tgbotapi.Message) (bool, error)
 	GetForms(id int64, channel chan tgbotapi.Update) error
 }
 

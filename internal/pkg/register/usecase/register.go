@@ -4,6 +4,7 @@ import (
 	errors2 "errors"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
+	models2 "phenixRecrutBot/internal/chat/models"
 	"phenixRecrutBot/internal/constants"
 	"phenixRecrutBot/internal/pkg/IAP/IAP"
 	"phenixRecrutBot/internal/pkg/errors"
@@ -22,15 +23,17 @@ func NewRegisterUseCase(iap IAP.IAP, repo repository.RegisterRepo) RegisterUseCa
 	return RegisterUseCase{iap: iap, repo: repo}
 }
 
-func (r RegisterUseCase) Register(id int64, channel chan tgbotapi.Update, userName string) (bool, error) {
+func (r RegisterUseCase) Register(id int64, channel chan tgbotapi.Update, message *tgbotapi.Message) (bool, error) {
 	forms, err := r.repo.List()
 	if err != nil {
 		return false, err
 	}
-	for _, item := range forms {
-		if item.Tg == userName {
-			r.iap.PrintText(id, "Ты уже создал анкету")
-			return false, nil
+	if message.Text != constants.Retry {
+		for _, item := range forms {
+			if item.Tg == message.From.UserName {
+				r.iap.PrintText(id, "Ты уже создал анкету")
+				return false, nil
+			}
 		}
 	}
 	name, metadata, err := r.iap.InputText(id, channel, constants.ReqNameMessage)
@@ -73,9 +76,17 @@ func (r RegisterUseCase) Register(id int64, channel chan tgbotapi.Update, userNa
 		Tg:            metadata.UserName,
 		Phone:         phone}
 
-	r.repo.SetNewForm(form, id)
+	err = r.repo.SetNewForm(form, id)
+	if err != nil {
+		return false, err
+	}
 
-	r.iap.PrintText(id, constants.FinishFormMessage)
+	msg := tgbotapi.NewMessage(id, constants.FinishFormMessage)
+	msg.ReplyMarkup = constants.RetryKeyboard
+	_, err = models2.BotAPI.Request(msg)
+	if err != nil {
+		return false, err
+	}
 	return true, err
 }
 
