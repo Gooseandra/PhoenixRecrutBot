@@ -28,7 +28,7 @@ func (chat Chat) Routine(chats map[int64]Chat, mainMutex *sync.Mutex) {
 		select {
 		case message := <-chat.Channel:
 			lastMassageTime = time.After(time.Hour * 10)
-			log.Println("MainStatus.Update")
+			log.Println("message from: " + message.Message.From.UserName + " " + message.Message.From.FirstName + " " + message.Message.From.LastName)
 			if message.Message != nil {
 				switch status {
 				case models.NilStatus:
