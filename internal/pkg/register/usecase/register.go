@@ -51,9 +51,21 @@ func (r RegisterUseCase) Register(id int64, channel chan tgbotapi.Update, messag
 		}
 	}
 
-	phone, _, err := r.iap.InputText(id, channel, constants.ReqPhoneMessage)
-	if err != nil {
-		log.Println("WARNING: %s", err.Error())
+	var phone string
+	for {
+		phone, _, err = r.iap.InputText(id, channel, constants.ReqPhoneMessage)
+		if err != nil {
+			log.Println("WARNING: %s", err.Error())
+		}
+		_, err = strconv.Atoi(phone)
+		if err != nil {
+			errors.Info(id, err.Error())
+			r.iap.PrintText(id, "Неккоректный номер телефона, проверь то, что ввёл")
+		} else if len(phone) < 10 {
+			r.iap.PrintText(id, "Неккоректный номер телефона, проверь то, что ввёл")
+		} else {
+			break
+		}
 	}
 
 	vk, _, err := r.iap.InputText(id, channel, constants.ReqVkMessage)
