@@ -1,7 +1,7 @@
 database:
   arguments: host=localhost port=5432 user=postgres password=passwor dbname=postgres sslmode=disable
   type: postgres
-telegram: 6153835213:AAEuLzqGtuuAjnvWVtDUxZhC1Hb5wa5VSs8
+telegram: 6133333313:AAgggzggguuAjngggtDUxZhgggb5wa5VSs8
 
 admins:
   - Gooseandra
